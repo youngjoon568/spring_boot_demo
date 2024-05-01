@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.zerock.b01.domain.Board;
 import org.zerock.b01.domain.Reply;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ public class ReplyRepositoryTests {
     @Autowired
     private ReplyRepository replyRepository;
 
+    @Transactional
     @Test
     public void testInsert() {
         Long bno = 100L;
@@ -34,6 +36,7 @@ public class ReplyRepositoryTests {
         });
     }
 
+    @Transactional
     @Test
     public void testBoardReplies() {
         Long bno = 208L;

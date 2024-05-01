@@ -1,20 +1,25 @@
 package org.zerock.b01.repository.search;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPQLQuery;
+
+import org.checkerframework.checker.units.qual.t;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
+import org.springframework.expression.spel.ast.Projection;
 import org.zerock.b01.domain.Board;
 import org.zerock.b01.domain.QBoard;
-
+import org.zerock.b01.domain.QReply;
+import org.zerock.b01.dto.BoardListReplyCountDTO;
 import java.util.List;
 
 /*
     BoardSearch를 상속받는 구현체
  */
-public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardSearch{
+public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardSearch {
 
     public BoardSearchImpl() {
         super(Board.class);
@@ -31,25 +36,25 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         QBoard board = QBoard.board;
 
         // 2. Query 작성....
-        JPQLQuery<Board> query = from(board);   // select .. from board
+        JPQLQuery<Board> query = from(board); // select .. from board
 
         // BooleanBuilder() 사용
         BooleanBuilder booleanBuilder = new BooleanBuilder(); // (
 
-        booleanBuilder.or(board.title.contains("11"));   // title like ...
+        booleanBuilder.or(board.title.contains("11")); // title like ...
         booleanBuilder.or(board.content.contains("11")); // content like ...
 
-//        query.where(board.title.contains("1")); // where title like ...
+        // query.where(board.title.contains("1")); // where title like ...
 
-        query.where(booleanBuilder);                     // )
-        query.where(board.bno.gt(0L));              // bno > 0
+        query.where(booleanBuilder); // )
+        query.where(board.bno.gt(0L)); // bno > 0
 
         // paging
         this.getQuerydsl().applyPagination(pageable, query);
 
-        List<Board> title = query.fetch();      // JPQLQuery에 대한 실행
+        List<Board> title = query.fetch(); // JPQLQuery에 대한 실행
 
-        long count = query.fetchCount();        // 쿼리 실행....
+        long count = query.fetchCount(); // 쿼리 실행....
 
         return null;
     }
@@ -61,17 +66,17 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
         QBoard board = QBoard.board;
 
         // 2. QL 작성...
-        JPQLQuery<Board> query = from(board);  // select ... from board
+        JPQLQuery<Board> query = from(board); // select ... from board
 
-        if( ( types != null && types.length > 0) && keyword != null ) {
+        if ((types != null && types.length > 0) && keyword != null) {
             // 검색 조건과 키워드가 있는 경우....
 
             BooleanBuilder booleanBuilder = new BooleanBuilder(); // (
 
-            for(String type: types) {
+            for (String type : types) {
                 switch (type) {
                     case "t":
-                        booleanBuilder.or(board.title.contains(keyword));  // title like concat('%',keyword,'%')
+                        booleanBuilder.or(board.title.contains(keyword)); // title like concat('%',keyword,'%')
                         break;
                     case "c":
                         booleanBuilder.or(board.content.contains(keyword));// content like concat('%',keyword,'%')
@@ -80,11 +85,11 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
                         booleanBuilder.or(board.writer.contains(keyword)); // writer like concat('%',keyword,'%')
                         break;
                 }
-            }  // for end
+            } // for end
 
-            query.where(booleanBuilder);  // )
+            query.where(booleanBuilder); // )
 
-        }// if end
+        } // if end
 
         // bno > 0
         query.where(board.bno.gt(0L));
@@ -98,6 +103,31 @@ public class BoardSearchImpl extends QuerydslRepositorySupport implements BoardS
 
         // Page<T> 형식으로 반환 : Page<Board>
         // PageImpl을 통해서 반환 : (list - 실제 목록 데이터, pageable, total -전체 개수)
-        return new PageImpl<>(list,pageable,count);
+        return new PageImpl<>(list, pageable, count);
+    }
+
+    public Page<BoardListReplyCountDTO> searchWithReplyCount(String[] types, String keyword, Pageable pageable) {
+        QBoard board = QBoard.board;
+        QReply reply = QReply.reply;
+
+        JPQLQuery<Board> query = from(board);
+        query.leftJoin(reply).on(reply.board.eq(board));
+
+        query.groupBy(board);
+
+        JPQLQuery<BoardListReplyCountDTO> dtoQuery = query.select(Projections.bean(BoardListReplyCountDTO.class,
+                board.bno,
+                board.title,
+                board.writer,
+                board.regDate,
+                reply.count().as("replyCount")));
+
+
+        this.getQuerydsl().applyPagination(pageable, dtoQuery);
+        List<BoardListReplyCountDTO> dtoList = dtoQuery.fetch();
+        
+        Long count = dtoQuery.fetchCount();
+        
+        return null;
     }
 }
