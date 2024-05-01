@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -15,11 +18,12 @@ import java.time.LocalDateTime;
 public class ReplyDTO {
 
     private Long rno;
+    @NotNull
     private Long bno;
+    @NotEmpty
     private String replyText;
+    @NotEmpty
     private String replyer;
 
     private LocalDateTime regDate, modDate;
-
-
 }
