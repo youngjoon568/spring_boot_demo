@@ -42,13 +42,14 @@
 </div>
 
 <script layout:fragment="script" th:inline="javascript">
-    const serverErrors = [[${errors}]];
-    const errs = [...serverErrors];
-    let errorMsg = "";
+    const errors = [[${errors}]]
+    console.log(errors)
 
-    if(errs) {
-        for(let i = 0 ; i < errs.length; i++ ) {
-            errorMsg += `${errs[i].field}은(는) ${errs[i].code}가 ${errs[i].defaultMessage} \n`
+    let errorMsg = ''
+
+    if(errors) {
+        for(let i = 0 ; i < errors.length; i++ ) {
+            errorMsg += `${errors[i].field}으(는) ${errors[i].code} \n`
         }
         alert(errorMsg)
     }
